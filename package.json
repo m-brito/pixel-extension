@@ -1,0 +1,50 @@
+{
+  "name": "pixel-extension",
+  "displayName": "Pixel Extension",
+  "publisher": "m-brito",
+  "version": "1.0.0",
+  "description": "",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "activationEvents": [
+    "onCommand:pixel.createStructure"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pixel.createStructure",
+        "title": "Pixel: create structure"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "pixel.createStructure",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/vscode": "^1.107.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mbrito-softable/PixelExtension/issues"
+  },
+  "homepage": "https://github.com/mbrito-softable/PixelExtension#readme",
+  "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d"
+}
