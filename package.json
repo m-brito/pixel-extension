@@ -29,13 +29,15 @@
     }
   },
   "scripts": {
-    "build": "tsc -p .",
-    "watch": "tsc -w -p .",
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
     "@types/vscode": "^1.107.0",
+    "esbuild": "^0.27.2",
+    "esbuild-plugin-tsconfig-paths": "^1.0.2",
     "typescript": "^5.9.3"
   },
   "keywords": [],
