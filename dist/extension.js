@@ -99,62 +99,63 @@ function normalizeComponentName(name) {
 function componentTemplate(componentName) {
   return [
     {
-      path: "index.ts",
-      content: `export * from './${componentName}'
-export * from './types'
-`
-    },
-    {
-      path: `${componentName}.tsx`,
-      content: `import type React from 'react'
-
-import type { ${componentName}Props } from './types'
-import { create${componentName}Styles } from './styles'
+      path: "index.tsx",
+      content: `// Hooks
 import { useThemedStyles } from '@hooks/useThemedStyles'
 
-export const ${componentName}: React.FC<${componentName}Props> = (props) => {
-  const { styles, classes } = useThemedStyles(props, create${componentName}Styles, {
-    debugName: '${componentName}',
+// Types
+import type { ${componentName}Props } from './types'
+
+// Styles
+import { createExampleStyles } from './styles'
+
+export function ${componentName}(props: ${componentName}Props) {
+  const { example } = props
+
+  const { styles } = useThemedStyles(props, create${componentName}Styles, {
     applyCommonProps: true,
-    commonSlot: 'container'
+    override: props.styles,
+    pick: p => [p.example]
   })
 
   return (
-    <div style={styles.container} className={classes.container}>
-      ${componentName}
+    <div style={styles.container}>
+      <span>{example}</span>
     </div>
   )
-}
+
 `
     },
     {
-      path: "types.ts",
-      content: `import type React from 'react'
-import type { StyleMap } from '@hooks/useThemedStyles/types'
+      path: `types.ts`,
+      content: `import type { create${componentName}Styles } from './styles'
 
-export type ${componentName}Styles = {
-  container: React.CSSProperties
-} & StyleMap
+export interface ${componentName}Props {
+  example: string
 
-export type ${componentName}Props = {
-  styles?: Partial<${componentName}Styles>
+  styles?: Partial<ReturnType<typeof create${componentName}Styles>>
 }
-`
+      `
     },
     {
       path: "styles.ts",
-      content: `import type { StyleMap } from '@hooks/useThemedStyles/types'
-import type { ${componentName}Props } from './types'
+      content: `// External Libraries
+import type { CSSProperties } from 'react'
 
-export function create${componentName}Styles(_: ${componentName}Props): StyleMap {
-  return {
+// Types
+import type { ${componentName}Props } from './types'
+import { styled } from '@hooks/useThemedStyles/types'
+
+export function create${componentName}Styles(
+  _props: ${componentName}Props
+): Record<string, CSSProperties> {
+  return styled({
     container: {
-      display: 'flex',
-      alignItems: 'center'
+      display: 'flex'
     }
-  }
+  })
 }
-`
+      `
     }
   ];
 }
@@ -164,7 +165,7 @@ async function createComponentStructure(input, deps) {
   const name = normalizeComponentName(input.componentName);
   const baseDir = `${input.rootFolderPath}/${name}`;
   if (await deps.fs.exists(baseDir)) {
-    throw new Error(`A pasta "${name}" j\xE1 existe.`);
+    throw new Error(`The folder "${name}" already exists.`);
   }
   await deps.fs.ensureDir(baseDir);
   await deps.fs.ensureDir(`${baseDir}/components`);
@@ -181,12 +182,12 @@ function registerCreateStructureCommand(context) {
     const fs2 = new NodeFileSystem();
     const folderUri = uri ?? ui.getWorkspaceRoot();
     if (!folderUri) {
-      ui.error("Pixel: selecione uma pasta no Explorer ou abra um workspace.");
+      ui.error("Pixel: select a folder to create the structure.");
       return;
     }
     const kind = await ui.pickOne([
-      { label: "Component", description: "Cria a estrutura base do componente" },
-      { label: "Cancel", description: "N\xE3o fazer nada" }
+      { label: "Component", description: "Creates the base structure of a component" },
+      { label: "Cancel", description: "Do nothing" }
     ], { title: "Pixel: create structure" });
     if (!kind || kind.label === "Cancel")
       return;
@@ -200,9 +201,9 @@ function registerCreateStructureCommand(context) {
         rootFolderPath: folderUri.fsPath,
         componentName: name
       }, { fs: fs2 });
-      ui.info(`Pixel: estrutura criada para "${name}".`);
+      ui.info(`Pixel: structure created for "${name}".`);
     } catch (e) {
-      ui.error(`Pixel: erro ao criar estrutura. ${e?.message ?? String(e)}`);
+      ui.error(`Pixel: error creating structure. ${e?.message ?? String(e)}`);
     }
   });
   context.subscriptions.push(disposable);
