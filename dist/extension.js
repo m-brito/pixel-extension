@@ -109,7 +109,7 @@ import type { ${componentName}Props } from './types'
 // Styles
 import { create${componentName}Styles } from './styles'
 
-export function ${componentName}(props: ${componentName}Props) {
+export const ${componentName}: React.FC<${componentName}Props> = props => {
   const { example } = props
 
   const { styles } = useThemedStyles(props, create${componentName}Styles, {
@@ -123,7 +123,7 @@ export function ${componentName}(props: ${componentName}Props) {
       <span>{example}</span>
     </div>
   )
-
+}
 `
     },
     {

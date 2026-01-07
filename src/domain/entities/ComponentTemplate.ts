@@ -4,7 +4,10 @@ export function componentTemplate(componentName: string): TemplateFile[] {
   return [
     {
       path: "index.tsx",
-      content: `// Hooks
+      content: `// External Libraries
+import type React from 'react'
+
+// Hooks
 import { useThemedStyles } from '@hooks/useThemedStyles'
 
 // Types
