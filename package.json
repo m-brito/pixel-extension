@@ -1,7 +1,7 @@
 {
-  "name": "pixel-extension",
-  "displayName": "Pixel Extension",
-  "publisher": "m-brito",
+  "name": "pixel-structures",
+  "displayName": "Pixel Structures",
+  "publisher": "PixelStructures",
   "version": "1.0.0",
   "description": "",
   "engines": {
@@ -58,6 +58,7 @@
   },
   "keywords": [],
   "author": "",
+  "icon": "assets/icon.png",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
