@@ -107,7 +107,7 @@ import { useThemedStyles } from '@hooks/useThemedStyles'
 import type { ${componentName}Props } from './types'
 
 // Styles
-import { createExampleStyles } from './styles'
+import { create${componentName}Styles } from './styles'
 
 export function ${componentName}(props: ${componentName}Props) {
   const { example } = props
