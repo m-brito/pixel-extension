@@ -12,6 +12,22 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Pixel",
+      "properties": {
+        "pixel.projectPreset": {
+          "type": "string",
+          "default": "ask",
+          "enum": [
+            "ask",
+            "lib",
+            "tailwind",
+            "styledComponents"
+          ],
+          "description": "Default project preset used by Pixel templates. Use 'ask' to always prompt."
+        }
+      }
+    },
     "commands": [
       {
         "command": "pixel.createStructure",

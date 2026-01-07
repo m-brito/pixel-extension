@@ -1,7 +1,6 @@
 {
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.removeUnusedImports": "explicit"
+    "source.fixAll.biome": "always"
   },
 
   "[javascript]": {
@@ -11,7 +10,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
@@ -24,5 +23,6 @@
   },
   "[jsonc]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "i18n-ally.localesPaths": ["src/locales", "src/services/MaskModule/locales"]
 }

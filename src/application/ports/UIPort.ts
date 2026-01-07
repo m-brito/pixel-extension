@@ -22,4 +22,6 @@ export interface UiPort {
       validate?: (value: string) => string | undefined
     }
   ): Promise<string | undefined>
+
+  confirm?(message: string): Promise<boolean>
 }

@@ -36,9 +36,9 @@ __export(extension_exports, {
 module.exports = __toCommonJS(extension_exports);
 
 // src/presentation/commands/registerCreateStructureCommand.ts
-var vscode4 = __toESM(require("vscode"));
+var vscode5 = __toESM(require("vscode"));
 
-// src/infra/vscode/VSCodeUiAdapter.ts
+// src/infra/vscode/adapters/VSCodeUiAdapter.ts
 var vscode = __toESM(require("vscode"));
 var VSCodeUiAdapter = class {
   info(message) {
@@ -60,6 +60,10 @@ var VSCodeUiAdapter = class {
   async pickOne(items, opts) {
     const picked = await vscode.window.showQuickPick(items.map((i) => ({ label: i.label, description: i.description, id: i.id })), { title: opts.title, placeHolder: opts.placeHolder, canPickMany: false });
     return picked;
+  }
+  async confirm(message) {
+    const ok = await vscode.window.showInformationMessage(message, "Yes", "No");
+    return ok === "Yes";
   }
 };
 
@@ -184,10 +188,20 @@ function runTemplate(projectId, templateId, params) {
 }
 
 // src/application/usecases/createStructureWizardUseCase.ts
+function projectExists(projectId) {
+  return PROJECTS.some((p) => String(p.id) === projectId);
+}
+function getProjectId(projectPreset) {
+  if (projectPreset && projectPreset !== "none" && projectExists(projectPreset)) {
+    return projectPreset;
+  }
+  return null;
+}
 var CreateStructureWizardUseCase = class {
-  constructor(ui, fs) {
+  constructor(ui, fs, config) {
     this.ui = ui;
     this.fs = fs;
+    this.config = config;
   }
   async execute(params) {
     const root = params.folderFsPath ?? this.ui.getWorkspaceRoot()?.fsPath ?? null;
@@ -195,29 +209,58 @@ var CreateStructureWizardUseCase = class {
       this.ui.error("Pixel: select a folder to create the structure.");
       return;
     }
-    const projectPick = await this.ui.pickOne(PROJECTS.map((p) => ({
-      id: String(p.id),
-      label: p.label,
-      description: p.description
-    })), { title: "Pixel: create structure", placeHolder: "Select the project preset" });
-    if (!projectPick)
+    let projectPreset = null;
+    try {
+      const rc = await this.config.read();
+      projectPreset = rc?.projectPreset ?? null;
+    } catch {
+    }
+    let projectId = getProjectId(projectPreset);
+    let pickedProjectLabel = null;
+    if (!projectId) {
+      const projectPick = await this.ui.pickOne(PROJECTS.map((p) => ({
+        id: String(p.id),
+        label: p.label,
+        description: p.description
+      })), {
+        title: "Pixel: create structure",
+        placeHolder: "Select the project preset"
+      });
+      if (!projectPick)
+        return;
+      projectId = projectPick.id;
+      pickedProjectLabel = projectPick.label;
+      const shouldAskRemember = !projectPreset;
+      if (shouldAskRemember && this.ui.confirm) {
+        const remember = await this.ui.confirm(`Remember "${pickedProjectLabel}" as the default preset for this workspace?`);
+        try {
+          if (remember) {
+            await this.config.write({ projectPreset: projectId });
+          } else {
+            await this.config.write({ projectPreset: "none" });
+          }
+        } catch {
+        }
+      }
+    }
+    if (!projectId)
       return;
-    const project = PROJECTS.find((p) => String(p.id) === projectPick.id);
+    const project = PROJECTS.find((p) => String(p.id) === String(projectId));
     if (!project) {
-      this.ui.error(`Pixel: project "${projectPick.id}" not found.`);
+      this.ui.error(`Pixel: project "${String(projectId)}" not found.`);
       return;
     }
     const templatePick = await this.ui.pickOne(project.templates.map((t) => ({ id: t.id, label: t.label })), { title: "Pixel: create structure", placeHolder: "Select a template" });
     if (!templatePick)
       return;
-    const name = await this.ui.input("Name", {
-      placeHolder: "e.g. TabSwitch"
-    });
+    const name = await this.ui.input("Name", { placeHolder: "e.g. TabSwitch" });
     if (!name)
       return;
     const normalizedName = normalizeComponentName(name);
     try {
-      const structure = runTemplate(project.id, templatePick.id, { name: normalizedName });
+      const structure = runTemplate(project.id, templatePick.id, {
+        name: normalizedName
+      });
       await this.fs.writeStructure(root, structure);
       this.ui.info(`Created ${templatePick.id} "${normalizedName}" (${project.label})`);
     } catch (e) {
@@ -226,17 +269,53 @@ var CreateStructureWizardUseCase = class {
   }
 };
 
+// src/infra/vscode/adapters/VscodePixelConfigAdapter.ts
+var vscode4 = __toESM(require("vscode"));
+var path = __toESM(require("node:path"));
+var VscodePixelConfigAdapter = class {
+  constructor(workspaceRootPath) {
+    this.workspaceRootPath = workspaceRootPath;
+    this.fileName = ".pixelrc.json";
+  }
+  fileUri() {
+    return vscode4.Uri.file(path.join(this.workspaceRootPath, this.fileName));
+  }
+  async read() {
+    try {
+      const buf = await vscode4.workspace.fs.readFile(this.fileUri());
+      const raw = Buffer.from(buf).toString("utf8");
+      const parsed = JSON.parse(raw);
+      if (!parsed.projectPreset || typeof parsed.projectPreset !== "string")
+        return null;
+      return { projectPreset: parsed.projectPreset };
+    } catch {
+      return null;
+    }
+  }
+  async write(rc) {
+    const content = JSON.stringify(rc, null, 2) + "\n";
+    await vscode4.workspace.fs.writeFile(this.fileUri(), Buffer.from(content, "utf8"));
+  }
+  async remove() {
+    try {
+      await vscode4.workspace.fs.delete(this.fileUri(), { useTrash: true });
+    } catch {
+    }
+  }
+};
+
 // src/presentation/commands/createStructureCommand.ts
 async function createStructureCommand(uri) {
   const ui = new VSCodeUiAdapter();
   const fs = new NodeFileSystemAdapter();
-  const useCase = new CreateStructureWizardUseCase(ui, fs);
+  const config = new VscodePixelConfigAdapter(ui.getWorkspaceRoot()?.fsPath ?? "");
+  const useCase = new CreateStructureWizardUseCase(ui, fs, config);
   await useCase.execute({ folderFsPath: uri?.fsPath ?? null });
 }
 
 // src/presentation/commands/registerCreateStructureCommand.ts
 function registerCreateStructureCommand(context) {
-  const disposable = vscode4.commands.registerCommand("pixel.createStructure", (uri) => createStructureCommand(uri));
+  const disposable = vscode5.commands.registerCommand("pixel.createStructure", (uri) => createStructureCommand(uri));
   context.subscriptions.push(disposable);
 }
 

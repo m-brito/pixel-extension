@@ -38,4 +38,9 @@ export class VSCodeUiAdapter implements UiPort {
     )
     return picked as any
   }
+
+  async confirm(message: string): Promise<boolean> {
+    const ok = await vscode.window.showInformationMessage(message, "Yes", "No")
+    return ok === "Yes"
+  }
 }
