@@ -1,9 +1,10 @@
 {
   "name": "pixel-structures",
   "displayName": "Pixel Structures",
-  "publisher": "PixelStructures",
+  "publisher": "MauricioTeixeira",
+  "author": "Mauricio Brito",
   "version": "1.0.0",
-  "description": "",
+  "description": "Aliases for general react components",
   "engines": {
     "vscode": "^1.107.0"
   },
@@ -45,6 +46,7 @@
     }
   },
   "scripts": {
+    "publish": "vsce publish --yarn",
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -57,9 +59,8 @@
     "typescript": "^5.9.3"
   },
   "keywords": [],
-  "author": "",
   "icon": "assets/icon.png",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/mbrito-softable/PixelExtension/issues"
