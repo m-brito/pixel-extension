@@ -1,4 +1,4 @@
-node_modules
-dist
-.vscode-test
-.DS_Store
+/node_modules
+dist/
+.vscode-test/
+**/.DS_Store
